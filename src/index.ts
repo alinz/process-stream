@@ -75,3 +75,18 @@ export const createReadableSource = (readable: Readable) => {
 export const createWritableSink = (writable: Writable) => {
   return each(asyncWrite(writable))
 }
+
+export const tea = () => {
+  //
+}
+
+interface Storage {
+  get<T>(key: string): Promise<T>
+  put<T>(key: string, value: T): Promise<void>
+  del(key: string): Promise<void>
+}
+
+// cb: (data1, data2), source1, source2
+export const merge = (storage: Storage) => (cb, ...sources) => {
+  //
+}
