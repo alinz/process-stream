@@ -68,7 +68,10 @@ export const fromIter = (iter) => (start, sink) => {
 export const map = (fn) => (source) => (start, sink) => {
   if (start !== 0) return
   source(0, async (t, d) => {
-    const res = await fn(d)
+    let res
+    if (t === 1) {
+      res = await fn(d)
+    }
     sink(t, t === 1 ? res : d)
   })
 }

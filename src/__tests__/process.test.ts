@@ -29,4 +29,26 @@ describe('how stream works', () => {
       }),
     )
   })
+
+  test('combination', async (done) => {
+    let count = 0
+    pipe(
+      fromIter([1, 2, 3, 4, 5, 6]),
+      map(async (val) => {
+        return val + 10
+      }),
+      filter((val) => {
+        return val % 3 === 0
+      }),
+      each(async (msg) => {
+        count++
+
+        console.log(msg)
+
+        if (count == 2) {
+          done()
+        }
+      }),
+    )
+  })
 })
