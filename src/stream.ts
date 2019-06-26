@@ -6,12 +6,19 @@ export interface Pipe<Value> {
   map<NewValue>(fn: (val: Value) => Promise<NewValue>): Pipe<NewValue>
   filter(fn: (val: Value) => Promise<boolean>): Pipe<Value>
   pipe<T>(src: Pipe<T>): Pipe<T>
+}
+
+export interface Source<Value> {
+  map<NewValue>(fn: (val: Value) => Promise<NewValue>): Source<NewValue>
+  filter(fn: (val: Value) => Promise<boolean>): Source<Value>
+  pipe<T>(src: Pipe<T>): Source<T>
   forEach(fn: (val: Value) => Promise<void>): void
 }
 
-export interface Source<Value> extends Pipe<Value> {}
-
-export interface Sink<Value> extends Pipe<Value> {
+export interface Sink<Value> {
+  map<NewValue>(fn: (val: Value) => Promise<NewValue>): Sink<NewValue>
+  filter(fn: (val: Value) => Promise<boolean>): Sink<Value>
+  pipe<T>(src: Pipe<T>): Sink<T>
   drain(): void
 }
 
@@ -47,35 +54,67 @@ class PipeImpl<T> implements Pipe<T> {
     this.chain = addToChain(this.chain, p.chain)
     return this as any
   }
+}
+
+class SourceImpl<T> {
+  p: PipeImpl<T>
+
+  constructor(src: any) {
+    this.p = new PipeImpl<T>(src)
+  }
+
+  map<NewT>(fn: (val: T) => Promise<NewT>): Source<NewT> {
+    this.p.chain = addToChain(this.p.chain, map(fn))
+    return this as any
+  }
+
+  filter(fn: (val: T) => Promise<boolean>): Source<T> {
+    this.p.chain = addToChain(this.p.chain, filter(fn))
+    return this as any
+  }
+
+  pipe<NewT>(src: Pipe<NewT>): Source<NewT> {
+    const p = src as PipeImpl<NewT>
+    this.p.chain = addToChain(this.p.chain, p.chain)
+    return this as any
+  }
 
   forEach(fn: (val: T) => Promise<void>): void {
     pipe(
-      this.chain,
+      this.p.chain,
       each(fn),
     )
   }
 }
 
-class SourceImpl<T> extends PipeImpl<T> {
-  constructor(src: any) {
-    super(src)
-  }
-}
-
-class SinkImpl<T> extends PipeImpl<T> {
+class SinkImpl<T> {
+  p: PipeImpl<T>
   sink: any
+
   constructor(sink: any) {
-    super()
+    this.p = new PipeImpl<T>()
     this.sink = sink
   }
 
-  forEach(fn: (val: T) => Promise<void>): void {
-    throw new Error('Sink does not have forEach')
+  map<NewT>(fn: (val: T) => Promise<NewT>): Sink<NewT> {
+    this.p.chain = addToChain(this.p.chain, map(fn))
+    return this as any
+  }
+
+  filter(fn: (val: T) => Promise<boolean>): Sink<T> {
+    this.p.chain = addToChain(this.p.chain, filter(fn))
+    return this as any
+  }
+
+  pipe<NewT>(src: Pipe<NewT>): Sink<NewT> {
+    const p = src as PipeImpl<NewT>
+    this.p.chain = addToChain(this.p.chain, p.chain)
+    return this as any
   }
 
   drain(): void {
     pipe(
-      this.chain,
+      this.p.chain,
       this.sink,
     )
   }

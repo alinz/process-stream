@@ -1,5 +1,6 @@
 import { ReadableBuffer, WritableBuffer, createReadableSource, createWritableSink, pipe, each, map, fromIter, filter } from '~/src/helpers'
 import { createSourceRange, createPipe } from '~/src/stream'
+import { eventNames } from 'cluster'
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
