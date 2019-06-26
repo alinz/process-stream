@@ -1,4 +1,7 @@
-import { ReadableBuffer, WritableBuffer, createReadableSource, createWritableSink, pipe, each, map, fromIter, filter } from '~/src/index'
+import { ReadableBuffer, WritableBuffer, createReadableSource, createWritableSink, pipe, each, map, fromIter, filter } from '~/src/helpers'
+import { createSourceRange, createPipe } from '~/src/stream'
+
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
 describe('how stream works', () => {
   test('simple source steram', async (done) => {
@@ -50,5 +53,31 @@ describe('how stream works', () => {
         }
       }),
     )
+  })
+})
+
+describe('testing streams', () => {
+  test('test createSourceRange pipe', async (done) => {
+    const s = createSourceRange(1, 10)
+    s.forEach(async (n) => {
+      if (n === 10) {
+        done()
+      }
+    })
+  })
+
+  test('test createSourceRange along with segmented pipe pipe', async (done) => {
+    const evenNumber = createPipe<number>()
+    evenNumber.filter(async (n) => {
+      return n % 2 === 0
+    })
+
+    const s = createSourceRange(1, 10000)
+
+    s.pipe(evenNumber).forEach(async (n) => {
+      if (n === 10000) {
+        done()
+      }
+    })
   })
 })
